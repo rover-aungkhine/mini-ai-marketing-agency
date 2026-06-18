@@ -1,123 +1,60 @@
-# Mini AI Marketing Agency — Pitch Deck Outline
+---
+marp: true
+paginate: true
+transition: fade
+auto-advance: 20
+---
+
+<!-- slide 1 -->
+# Who's my person?
+- SME owners in Myanmar — café, boutique, clinic, salon operators
+- No marketing budget, no agency, no time to learn complex tools
+- Burmese-first — they think and sell in မြန်မာ, not English
+- Need ready-to-post content, not another platform to figure out
 
 ---
 
-## Slide 1: Title
-
-**Mini AI Marketing Agency Assistant**  
-*Instant marketing packages for small businesses — no cost, no login, no fuss.*
-
----
-
-## Slide 2: The Problem
-
-- SMEs need marketing but can't afford agencies or freelancers.
-- Existing tools are either too complex (full platforms) or too generic (template sites).
-- Most AI marketing tools require API keys, subscriptions, or logins.
-- Burmese-language marketing content is severely underserved.
+<!-- slide 2 -->
+# Their problem
+- 150M+ SMEs worldwide can't afford marketing agencies
+- Existing tools require API keys, logins, or subscriptions — instant friction
+- Burmese marketing tools: **zero.** Completely empty market.
+- They don't need to learn marketing — they need output they can copy-paste right now
 
 ---
 
-## Slide 3: Our Solution
-
-A **free, single-page web app** that turns a simple business brief into a complete starter marketing package.
-
-- 8 fields → 6 polished marketing assets.
-- Rule-based engine — no AI API costs, no backend.
-- Works entirely in the browser. Open `index.html` and go.
-
----
-
-## Slide 4: What It Generates
-
-| # | Output                     | Why It Matters                         |
-|---|----------------------------|----------------------------------------|
-| 1 | Brand positioning summary  | One-paragraph elevator pitch           |
-| 2 | 3 content pillars          | Foundation for a content calendar      |
-| 3 | 5 post ideas               | A week of social content, ready to create |
-| 4 | 3 captions                 | Copy-paste ready for Facebook/Instagram |
-| 5 | 2 ad copy options          | Paid campaign starter scripts          |
-| 6 | 1 creative headline        | Visual ad hook for banners             |
+<!-- slide 3 -->
+# What I built
+**Mini AI Marketing Agency** — free, static web app, no backend, no login.
+- 8-field business brief form → 6 polished marketing assets
+- Brand positioning, 3 content pillars, 5 post ideas, 3 captions, 2 ad copies, 1 creative headline
+- Bilingual: English + Burmese (full template parity across all 4 tones)
+- ~200 rule-based templates, copy buttons per section, clean responsive UI
 
 ---
 
-## Slide 5: Key Differentiators
-
-- **Bilingual** — English and Burmese (မြန်မာ), a hugely underserved market.
-- **Platform-aware** — Facebook and Instagram optimised separately.
-- **Tone control** — Friendly, Professional, Premium, or Fun.
-- **No barrier to entry** — no signup, no payment, no API key.
-- **100% client-side** — nothing leaves the user's browser.
-
----
-
-## Slide 6: How It Works (Technical)
-
-```
-User fills form (8 fields)
-        ↓
-Validation (all required)
-        ↓
-Template selection by [language][tone]
-        ↓
-Pillar selection by business type keywords
-        ↓
-Placeholder interpolation
-        ↓
-Render 6 result cards + copy buttons
-```
-
-Stack: **HTML + CSS + Vanilla JS**. No frameworks, no build step.
+<!-- slide 4 -->
+# How I built it
+- **MCP:** `.mcp.json` — `claude-mem` plugin for memory & knowledge search during development
+- **Skill:** `.claude/skills/marketing-strategy/SKILL.md` — guides Claude to explain, refine, and cross-check generated marketing output across 4 tones × 2 platforms
+- **Agent:** `.claude/agents/marketing-assistant.md` — role definition: bilingual SME strategist that works from the template banks in `script.js`
+- Stack: HTML5 + CSS3 + vanilla JS. `TEMPLATES[language][tone]` object, `pick()` randomness, `interpolate()` placeholder engine, keyword-matched `PILLAR_MAP`
 
 ---
 
-## Slide 7: Target Users
-
-| Segment           | Why They Need This                          |
-| ----------------- | ------------------------------------------- |
-| Small café owners | Need social content but can't hire help     |
-| Boutique shops    | Want brand positioning and ad ideas         |
-| Clinic owners     | Need professional tone, Facebook-focus      |
-| Freelancers       | Reselling marketing packages to clients     |
-| Burmese SMEs      | Zero Burmese-language marketing tools exist |
+<!-- slide 5 -->
+# Why it matters
+- **Burmese-first:** zero competition in a fast-growing digital economy — first-mover advantage
+- **Free forever:** rule-based engine has no API costs, no rate limits, no deprecation risk
+- **Infinite shelf life:** template bank architecture — each new language is just another object key
+- **Works offline:** open `index.html` from `file://` — no server, no install, no barrier
 
 ---
 
-## Slide 8: MVP Scope (Done)
-
-- [x] 8-field business brief form
-- [x] Rule-based generation engine (en + my, 4 tones, 2 platforms)
-- [x] 6 output sections with copy buttons
-- [x] Responsive design (mobile + desktop)
-- [x] Reset and back-to-form controls
-- [x] No backend, no login, no API keys
-
----
-
-## Slide 9: Roadmap (Future)
-
-| Priority | Feature                          | Effort   |
-| -------- | -------------------------------- | -------- |
-| P1       | Export to PDF                    | Medium   |
-| P1       | Regenerate individual sections   | Small    |
-| P2       | Save/load briefs via localStorage| Small    |
-| P2       | More languages (Thai, Vietnamese)| Medium   |
-| P3       | More platforms (TikTok, LinkedIn)| Medium   |
-| P3       | AI upgrade path (optional LLM)   | Large    |
-
----
-
-## Slide 10: Why Now?
-
-- 150M+ small businesses worldwide need affordable marketing.
-- Burmese digital economy is growing fast — no local tools exist.
-- Rule-based generation is **free to run forever** with no API costs.
-- Perfect foundation: the template bank grows with usage.
-
----
-
-## Slide 11: Call to Action
-
-**Try it:** Open `index.html` in any browser.  
-**Contribute:** The template bank is open for expansion.  
-**Share:** Send it to a small business owner who needs it.
+<!-- slide 6 -->
+# Done checklist
+- [ ] repo public — `github.com/rover-aungkhine/mini-ai-marketing-agency`
+- [ ] MCP + skill + agent used — `.mcp.json`, `SKILL.md`, `marketing-assistant.md`
+- [ ] report.md in team repo — README with commit guide + spec with success criteria
+- [ ] 8-field form + 6 output sections + bilingual generation + responsive + copy buttons
+- [ ] No backend, no login, no API keys — runs entirely in the browser
