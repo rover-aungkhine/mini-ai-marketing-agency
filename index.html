@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini AI Marketing Agency</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">&#9889; Mini AI Marketing Agency</h1>
+      <p class="tagline">Fill in your business brief and get a starter marketing package — instantly.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Business Brief Form -->
+    <section id="form-section" class="card form-card">
+      <h2>Business Brief</h2>
+      <p class="section-desc">Tell us about your business and we'll generate a tailored marketing package.</p>
+
+      <form id="brief-form" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="businessName">Business name <span class="required">*</span></label>
+            <input type="text" id="businessName" placeholder="e.g. Mandalay Tea House" required>
+          </div>
+
+          <div class="field">
+            <label for="businessType">Business type <span class="required">*</span></label>
+            <input type="text" id="businessType" placeholder="e.g. café, boutique, clinic" required>
+          </div>
+
+          <div class="field">
+            <label for="productService">Product or service <span class="required">*</span></label>
+            <input type="text" id="productService" placeholder="e.g. artisan tea blends" required>
+          </div>
+
+          <div class="field">
+            <label for="targetAudience">Target audience <span class="required">*</span></label>
+            <input type="text" id="targetAudience" placeholder="e.g. young professionals 25-40" required>
+          </div>
+
+          <div class="field">
+            <label for="mainOffer">Main offer <span class="required">*</span></label>
+            <input type="text" id="mainOffer" placeholder="e.g. 20% off first order" required>
+          </div>
+
+          <div class="field">
+            <label for="platform">Platform <span class="required">*</span></label>
+            <select id="platform" required>
+              <option value="">-- Choose --</option>
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="tone">Tone <span class="required">*</span></label>
+            <select id="tone" required>
+              <option value="">-- Choose --</option>
+              <option value="friendly">Friendly</option>
+              <option value="professional">Professional</option>
+              <option value="premium">Premium</option>
+              <option value="fun">Fun</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="language">Language <span class="required">*</span></label>
+            <select id="language" required>
+              <option value="">-- Choose --</option>
+              <option value="en">English</option>
+              <option value="my">Burmese (မြန်မာ)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Generate Marketing Package</button>
+          <button type="reset" class="btn btn-secondary" id="reset-btn">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Results Section (hidden until generation) -->
+    <section id="results-section" class="results-section" style="display: none;">
+      <div class="results-header">
+        <h2>Your Marketing Package</h2>
+        <button class="btn btn-outline" id="copy-all-btn">Copy All</button>
+      </div>
+
+      <!-- 1. Brand Positioning -->
+      <div class="card result-card" id="card-positioning">
+        <div class="card-header">
+          <h3>1. Brand Positioning Summary</h3>
+          <button class="btn btn-small btn-copy" data-target="content-positioning">Copy</button>
+        </div>
+        <div class="card-body" id="content-positioning"></div>
+      </div>
+
+      <!-- 2. Content Pillars -->
+      <div class="card result-card" id="card-pillars">
+        <div class="card-header">
+          <h3>2. Content Pillars</h3>
+          <button class="btn btn-small btn-copy" data-target="content-pillars">Copy</button>
+        </div>
+        <div class="card-body" id="content-pillars"></div>
+      </div>
+
+      <!-- 3. Post Ideas -->
+      <div class="card result-card" id="card-posts">
+        <div class="card-header">
+          <h3>3. Post Ideas</h3>
+          <button class="btn btn-small btn-copy" data-target="content-posts">Copy</button>
+        </div>
+        <div class="card-body" id="content-posts"></div>
+      </div>
+
+      <!-- 4. Captions -->
+      <div class="card result-card" id="card-captions">
+        <div class="card-header">
+          <h3>4. Captions</h3>
+          <button class="btn btn-small btn-copy" data-target="content-captions">Copy</button>
+        </div>
+        <div class="card-body" id="content-captions"></div>
+      </div>
+
+      <!-- 5. Ad Copy -->
+      <div class="card result-card" id="card-ads">
+        <div class="card-header">
+          <h3>5. Ad Copy Options</h3>
+          <button class="btn btn-small btn-copy" data-target="content-ads">Copy</button>
+        </div>
+        <div class="card-body" id="content-ads"></div>
+      </div>
+
+      <!-- 6. Creative Headline -->
+      <div class="card result-card" id="card-creative">
+        <div class="card-header">
+          <h3>6. Static Creative Headline</h3>
+          <button class="btn btn-small btn-copy" data-target="content-creative">Copy</button>
+        </div>
+        <div class="card-body" id="content-creative"></div>
+      </div>
+
+      <div class="results-footer">
+        <button class="btn btn-secondary" id="back-to-form-btn">&#8593; Back to Form</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>Mini AI Marketing Agency &mdash; A rule-based marketing assistant for SMEs. No API keys, no backend, no login.</p>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

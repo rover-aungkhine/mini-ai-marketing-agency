@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "claude-mem": {
+      "type": "plugin",
+      "name": "claude-mem",
+      "enabled": true,
+      "description": "Memory and knowledge search plugin for Claude — search across observations, build knowledge corpora, and query project context."
+    }
+  }
+}
