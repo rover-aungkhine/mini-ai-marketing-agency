@@ -280,7 +280,47 @@ function handleDrop(taskId, newStatus, project) {
 }
 
 function renderList(container, tasks, project) {
-  container.innerHTML = '<p>List view — coming in Task 4</p>';
+  container.innerHTML = `
+    <div class="task-list">
+      <div class="task-list-header">
+        <span>Title</span><span>Status</span><span>Priority</span>
+        <span>Assignee</span><span>Due Date</span><span>Subtasks</span>
+      </div>
+      ${tasks.map(task => {
+        const blocked = isBlocked(task, tasks);
+        const subtaskTotal = task.subtasks?.length || 0;
+        const subtaskDone = task.subtasks?.filter(s => s.done).length || 0;
+        const statusObj = STATUSES.find(s => s.value === task.status);
+        return `
+          <div class="task-list-row" data-task-id="${task.id}">
+            <div class="task-list-row-title">
+              ${blocked ? '🔒 ' : ''}${esc(task.title)}
+            </div>
+            <div><span class="status-badge status-${task.status}">${statusObj?.label || task.status}</span></div>
+            <div><span class="priority-dot priority-${task.priority}"></span> ${task.priority}</div>
+            <div>${task.assignee ? esc(task.assignee) : '—'}</div>
+            <div>${task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</div>
+            <div>${subtaskTotal > 0 ? `${subtaskDone}/${subtaskTotal}` : '—'}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // Click row to expand
+  container.querySelectorAll('.task-list-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const taskId = row.dataset.taskId;
+      const freshProject = Store.getById('projects', project.id);
+      const task = (freshProject.tasks || []).find(t => t.id === taskId);
+      if (task) {
+        renderTaskExpand(row, task, freshProject, () => {
+          const parent = container.closest('.tasks-section').parentElement;
+          refresh(parent, freshProject);
+        });
+      }
+    });
+  });
 }
 
 function renderAddForm(container, project, onSave) {
