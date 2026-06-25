@@ -324,5 +324,270 @@ function renderList(container, tasks, project) {
 }
 
 function renderAddForm(container, project, onSave) {
-  container.innerHTML = '<p>Add form — coming in Task 5</p>';
+  container.innerHTML = `
+    <div class="task-add-form">
+      <div class="form-grid">
+        <div class="field">
+          <label>Title <span class="required">*</span></label>
+          <input type="text" id="new-task-title" placeholder="Task title" required>
+        </div>
+        <div class="field">
+          <label>Priority</label>
+          <select id="new-task-priority">
+            ${PRIORITIES.map(p => `<option value="${p}" ${p === 'medium' ? 'selected' : ''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Assignee</label>
+          <input type="text" id="new-task-assignee" placeholder="Person name">
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" id="new-task-due">
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>Description</label>
+        <textarea id="new-task-desc" rows="2" placeholder="Optional notes..."></textarea>
+      </div>
+      <div class="task-expand-actions">
+        <button class="btn btn-primary btn-small" id="save-new-task">Create Task</button>
+        <button class="btn btn-secondary btn-small" id="cancel-new-task">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  container.querySelector('#save-new-task').addEventListener('click', () => {
+    const title = container.querySelector('#new-task-title').value.trim();
+    if (!title) { showToast('Task title is required.'); return; }
+
+    const now = new Date().toISOString();
+    const newTask = {
+      id: taskId(),
+      title,
+      description: container.querySelector('#new-task-desc').value.trim(),
+      status: 'todo',
+      priority: container.querySelector('#new-task-priority').value,
+      assignee: container.querySelector('#new-task-assignee').value.trim(),
+      dueDate: container.querySelector('#new-task-due').value || null,
+      attachments: [],
+      blockedBy: [],
+      subtasks: [],
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const freshProject = Store.getById('projects', project.id);
+    const tasks = [...(freshProject.tasks || []), newTask];
+    persistTasks(freshProject, tasks);
+    showToast('Task created!');
+    onSave();
+  });
+
+  container.querySelector('#cancel-new-task').addEventListener('click', () => {
+    container.innerHTML = '';
+  });
+}
+
+function renderTaskExpand(afterElement, task, project, onRefresh) {
+  // Remove any existing expand
+  document.querySelectorAll('.task-expand').forEach(el => el.remove());
+
+  const expand = document.createElement('div');
+  expand.className = 'task-expand';
+  expand.innerHTML = `
+    <div class="task-expand-field">
+      <label>Title</label>
+      <input type="text" value="${esc(task.title)}" data-field="title">
+    </div>
+    <div class="task-expand-field">
+      <label>Description</label>
+      <textarea data-field="description">${esc(task.description || '')}</textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="task-expand-field">
+        <label>Status</label>
+        <select data-field="status">
+          ${STATUSES.map(s => `<option value="${s.value}" ${s.value === task.status ? 'selected' : ''}>${s.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="task-expand-field">
+        <label>Priority</label>
+        <select data-field="priority">
+          ${PRIORITIES.map(p => `<option value="${p}" ${p === task.priority ? 'selected' : ''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div class="task-expand-field">
+        <label>Due Date</label>
+        <input type="date" value="${task.dueDate || ''}" data-field="dueDate">
+      </div>
+    </div>
+    <div class="task-expand-field">
+      <label>Assignee</label>
+      <input type="text" value="${esc(task.assignee || '')}" data-field="assignee">
+    </div>
+
+    <div class="task-expand-field">
+      <label>Subtasks (${task.subtasks?.filter(s => s.done).length || 0}/${task.subtasks?.length || 0})</label>
+      <ul class="subtask-list">
+        ${(task.subtasks || []).map(st => `
+          <li class="subtask-item ${st.done ? 'done' : ''}">
+            <input type="checkbox" ${st.done ? 'checked' : ''} data-subtask-id="${st.id}">
+            <span class="subtask-title">${esc(st.title)}</span>
+            <button class="subtask-delete" data-subtask-id="${st.id}">×</button>
+          </li>
+        `).join('')}
+      </ul>
+      <div class="add-subtask-form">
+        <input type="text" placeholder="Add subtask..." id="new-subtask-input">
+        <button class="btn btn-small" id="add-subtask-btn">+</button>
+      </div>
+    </div>
+
+    ${renderDependencySection(task, project.tasks || [])}
+
+    <div class="task-expand-actions">
+      <button class="btn btn-primary btn-small" id="save-task-btn">Save</button>
+      <button class="btn btn-danger btn-small" id="delete-task-btn">Delete</button>
+      <button class="btn btn-secondary btn-small" id="close-task-btn">Close</button>
+    </div>
+  `;
+
+  afterElement.after(expand);
+
+  // Subtask checkbox toggle
+  expand.querySelectorAll('.subtask-item input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const freshProject = Store.getById('projects', project.id);
+      const tasks = [...(freshProject.tasks || [])];
+      const t = tasks.find(t => t.id === task.id);
+      const st = t.subtasks.find(s => s.id === cb.dataset.subtaskId);
+      if (st) { st.done = cb.checked; }
+      persistTasks(freshProject, tasks);
+      onRefresh();
+    });
+  });
+
+  // Delete subtask
+  expand.querySelectorAll('.subtask-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const freshProject = Store.getById('projects', project.id);
+      const tasks = [...(freshProject.tasks || [])];
+      const t = tasks.find(t => t.id === task.id);
+      t.subtasks = t.subtasks.filter(s => s.id !== btn.dataset.subtaskId);
+      persistTasks(freshProject, tasks);
+      onRefresh();
+    });
+  });
+
+  // Add subtask
+  expand.querySelector('#add-subtask-btn').addEventListener('click', () => {
+    const input = expand.querySelector('#new-subtask-input');
+    const title = input.value.trim();
+    if (!title) return;
+    const freshProject = Store.getById('projects', project.id);
+    const tasks = [...(freshProject.tasks || [])];
+    const t = tasks.find(t => t.id === task.id);
+    t.subtasks.push({ id: taskId(), title, done: false });
+    persistTasks(freshProject, tasks);
+    onRefresh();
+  });
+
+  // Add dependency
+  const depSelect = expand.querySelector('#add-dep-select');
+  if (depSelect) {
+    depSelect.addEventListener('change', () => {
+      const depId = depSelect.value;
+      if (!depId) return;
+      const freshProject = Store.getById('projects', project.id);
+      const tasks = [...(freshProject.tasks || [])];
+      const t = tasks.find(t => t.id === task.id);
+      if (!t.blockedBy.includes(depId)) t.blockedBy.push(depId);
+      persistTasks(freshProject, tasks);
+      onRefresh();
+    });
+  }
+
+  // Save
+  expand.querySelector('#save-task-btn').addEventListener('click', () => {
+    const freshProject = Store.getById('projects', project.id);
+    const tasks = [...(freshProject.tasks || [])];
+    const idx = tasks.findIndex(t => t.id === task.id);
+    if (idx === -1) return;
+    tasks[idx] = {
+      ...tasks[idx],
+      title: expand.querySelector('[data-field="title"]').value.trim() || task.title,
+      description: expand.querySelector('[data-field="description"]').value.trim(),
+      status: expand.querySelector('[data-field="status"]').value,
+      priority: expand.querySelector('[data-field="priority"]').value,
+      dueDate: expand.querySelector('[data-field="dueDate"]').value || null,
+      assignee: expand.querySelector('[data-field="assignee"]').value.trim(),
+      updatedAt: new Date().toISOString()
+    };
+    persistTasks(freshProject, tasks);
+    showToast('Task updated!');
+    onRefresh();
+  });
+
+  // Delete
+  expand.querySelector('#delete-task-btn').addEventListener('click', () => {
+    if (!confirm(`Delete "${task.title}"?`)) return;
+    const freshProject = Store.getById('projects', project.id);
+    let tasks = (freshProject.tasks || []).filter(t => t.id !== task.id);
+    tasks = tasks.map(t => ({
+      ...t,
+      blockedBy: t.blockedBy.filter(id => id !== task.id)
+    }));
+    persistTasks(freshProject, tasks);
+    showToast('Task deleted.');
+    onRefresh();
+  });
+
+  // Close
+  expand.querySelector('#close-task-btn').addEventListener('click', () => {
+    expand.remove();
+  });
+}
+
+function renderDependencySection(task, allTasks) {
+  const available = allTasks.filter(t =>
+    t.id !== task.id &&
+    t.status !== 'done' &&
+    !(task.blockedBy || []).includes(t.id)
+  );
+  const blockers = (task.blockedBy || [])
+    .map(id => allTasks.find(t => t.id === id))
+    .filter(Boolean);
+  const blocking = getBlockingTasks(task, allTasks);
+
+  return `
+    <div class="dependency-section">
+      <h5>Blocked by</h5>
+      ${blockers.length === 0 ? '<p style="font-size:0.82rem;color:var(--color-text-secondary)">No blockers</p>' :
+        blockers.map(b => `
+          <div class="dependency-item">
+            <span class="status-badge status-${b.status}">${b.status}</span>
+            <span>${esc(b.title)}</span>
+          </div>
+        `).join('')}
+      ${available.length > 0 ? `
+        <div class="add-dependency-form">
+          <select id="add-dep-select">
+            <option value="">+ Add dependency...</option>
+            ${available.map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('')}
+          </select>
+        </div>
+      ` : ''}
+
+      ${blocking.length > 0 ? `
+        <h5 style="margin-top:10px">Blocking</h5>
+        ${blocking.map(b => `
+          <div class="dependency-item">
+            <span>→ ${esc(b.title)}</span>
+            <span class="status-badge status-${b.status}">${b.status}</span>
+          </div>
+        `).join('')}
+      ` : ''}
+    </div>
+  `;
 }
