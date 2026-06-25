@@ -152,3 +152,20 @@ Phased: Chapter 4 MVP → Chapter 5 improvements → Chapter 6 polish.
 5. Present analysis to user, wait for approval before coding
 
 The old task management plan (`docs/superpowers/plans/2025-06-25-task-management.md`) may become obsolete if the user approves the new workspace model. Don't continue executing it — the new direction supersedes it.
+
+---
+
+## Additional User Context (from follow-up message)
+
+> This is not just storage. These folders represent the actual operating workflow of the agency. The app should be a real working space where I can run my agency. Each client's workspace should feel like a dedicated operating system. It should feel like my real workspace — but smarter.
+
+**Key insight:** The product should not just mirror the folder structure as UI sections. It should make each section *active* — with AI assistance, smart workflows, and real agency operations built in. The folder names are the skeleton, but the product should make them come alive.
+
+**Examples of "active" sections:**
+- Brief & Contract → not just file storage, but a structured brief form + contract status tracking
+- Content Calendar → not just a list, but a visual calendar with scheduled posts, approval states, platform tags
+- Meetings & Feedback → not just notes, but meeting logs with AI-generated summaries and follow-up drafts
+- Ads & Reports → not just files, but campaign tracking with KPIs and AI-generated report summaries
+- Brand Assets → not just a folder, but an organized asset library with usage context
+
+The user wants the app to feel like a *thinking partner* for running their agency, not just a data organizer.
