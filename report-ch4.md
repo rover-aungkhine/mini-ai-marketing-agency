@@ -4,7 +4,7 @@ github_username: rover-aungkhine
 personal_repo_url: https://github.com/rover-aungkhine/mini-ai-marketing-agency
 project_summary: AgencyOS is a browser-only agency management dashboard that combines client CRM, project tracking, content calendar, creative management, and AI-powered marketing content generation — all running client-side with no backend, no framework, and no API key.
 slides_url: slides/pitch.md
-live_url: <!-- Add your deployed URL here, e.g. https://your-app.netlify.app -->
+live_url: https://rover-aungkhine.github.io/mini-ai-marketing-agency/
 license: MIT
 
 ## What I Built
