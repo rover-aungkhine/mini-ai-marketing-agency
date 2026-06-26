@@ -1,141 +1,119 @@
-# Mini AI Marketing Agency Assistant — Project Spec
+# AgencyOS Project Spec
 
 ## Overview
 
-**Project:** Mini AI Marketing Agency Assistant  
-**Type:** Ch-3 Personal Project  
-**Stack:** HTML, CSS, JavaScript only (no backend, no framework)  
-**Deployment:** Static public web app  
+**Project:** AgencyOS
+**Origin:** Mini AI Marketing Agency Assistant
+**Stack:** Static HTML, CSS, and vanilla JavaScript ES modules
+**Storage:** Browser `localStorage` only
+**Deployment:** Any static file server
 
-A small AI-style marketing assistant for SMEs. The user fills in a business brief form and the app generates a starter marketing package using rule-based JavaScript logic — no API keys, no backend, no login.
+AgencyOS is a lightweight agency operations dashboard. It helps users manage clients, track projects, and generate marketing content packages without a backend, framework, login, or API key.
 
----
+## Core Product Areas
 
-## MVP Features
+### Dashboard
 
-### 1. Business Brief Form
+- Shows total clients, active clients, total projects, and in-progress projects.
+- Provides quick actions for client creation, project creation, content generation, and client browsing.
+- Shows recent client/project activity from local records.
 
-| Field            | Type          | Options / Notes                        |
-| ---------------- | ------------- | -------------------------------------- |
-| Business name    | text input    | free text                              |
-| Business type    | text input    | free text (e.g. café, boutique, clinic)|
-| Product/service  | text input    | free text                              |
-| Target audience  | text input    | free text                              |
-| Main offer       | text input    | free text                              |
-| Platform         | select/dropdown | Facebook, Instagram                  |
-| Tone             | select/dropdown | Friendly, Professional, Premium, Fun  |
-| Language         | select/dropdown | English, Burmese (`my`)              |
+### Client Management
 
-### 2. Generated Output (rule-based JS)
+Client records support:
 
-1. **Brand positioning summary** — one-paragraph synthesis from inputs.
-2. **3 content pillars** — thematic categories derived from business type + audience + offer.
-3. **5 post ideas** — platform-appropriate content ideas with titles.
-4. **3 captions** — ready-to-use social captions in the selected tone + language.
-5. **2 ad copy options** — short-form paid ad scripts tailored to platform.
-6. **1 static creative headline idea** — a visual ad headline for a banner/creative.
+- Brand/client name and business type.
+- Contact person, phone, email, monthly fee, start date, status, notes.
+- Purchased services.
+- Linked project list on the client detail page.
+- Search and status filtering on the client list.
 
-### 3. Result Page / Section
+### Project Management
 
-- Clean, readable layout for all output blocks.
-- **Copy button** per section (or a single copy-all).
-- **Reset button** to clear the form and start over.
+Project records support:
 
----
+- Project name and linked client.
+- Service type, scope, start date, deadline, status, priority, approval status.
+- Internal and client-facing notes.
+- Optional generated content package saved on the project.
+- Search, client filtering, and status filtering on the project list.
+
+### Content Generation
+
+`generator.js` is the pure generation engine. It exports:
+
+```js
+export { generate, interpolate };
+```
+
+`generate(ctx)` accepts:
+
+```js
+{
+  name: string,
+  type: string,
+  product: string,
+  audience: string,
+  offer: string,
+  platform: 'facebook' | 'instagram',
+  platformLabel: 'Facebook' | 'Instagram',
+  tone: 'friendly' | 'professional' | 'premium' | 'fun',
+  language: 'en' | 'my'
+}
+```
+
+It returns:
+
+```js
+{
+  positioning: string,
+  pillars: string[3],
+  posts: string[5],
+  captions: string[3],
+  ads: string[2],
+  creative: string
+}
+```
+
+There are two generator surfaces:
+
+- Project detail generator: saves output to the project record as `generatedContent`.
+- Standalone generator at `#/generate`: temporary output for copying only; it does not save to localStorage.
+
+## Routes
+
+| Route | Purpose |
+| --- | --- |
+| `#/` | Redirects to `#/dashboard` |
+| `#/dashboard` | Dashboard |
+| `#/clients` | Client list |
+| `#/clients/new` | Add client |
+| `#/clients/:id` | Client detail |
+| `#/clients/:id/edit` | Edit client |
+| `#/projects` | Project list |
+| `#/projects/new` | Add project |
+| `#/projects/new?client=<id>` | Add project with client preselected |
+| `#/projects/:id` | Project detail |
+| `#/projects/:id/edit` | Edit project |
+| `#/generate` | Standalone generator |
 
 ## Technical Constraints
 
-- **No backend.** All logic runs client-side.
-- **No login / auth.**
-- **No payment / monetization.**
-- **No API key.** Generation is rule-based (templates, arrays, conditionals in JS).
-- **Single page** — the form and results live on one HTML page.
-- **Responsive** — works on mobile and desktop.
-
----
-
-## File Structure (Ch-3 Deliverables)
-
-```
-mini-ai-marketing-agency/
-├── index.html                  # Main app (form + results)
-├── style.css                   # All styles
-├── script.js                   # Rule-based generation engine
-├── README.md                   # Project overview, commit guide
-├── .mcp.json                   # MCP configuration
-├── .claude/
-│   ├── skills/
-│   │   └── marketing-strategy/
-│   │       └── SKILL.md        # Skill definition for marketing strategy
-│   └── agents/
-│       └── marketing-assistant.md  # Agent definition
-└── slides/
-    └── pitch.md                # Pitch deck / presentation outline
-```
-
----
-
-## Generation Engine Design (script.js)
-
-### Rule-Based Approach
-
-The generator uses template banks keyed by combinations of inputs:
-
-```
-tone × platform × language → template pool
-business type → content pillar suggestions
-target audience → tone-adjusted framing
-```
-
-Each output section draws from a curated set of templates, fills in `{placeholders}`, and applies random variation so repeated runs with the same inputs produce fresh results.
-
-### Data Structures
-
-- **`TEMPLATES`** — nested object keyed by `[language][tone][section]` containing arrays of template strings.
-- **`CONTENT_PILLARS`** — object keyed by business type categories mapping to pillar triplets.
-- **`AD_COPIES`** — object keyed by `[platform][tone]` with ad script templates.
-
-### Generation Flow
-
-1. Read form values on submit.
-2. Validate all required fields.
-3. Build context object from inputs.
-4. For each output section, pick 1+ templates from the matching pool, interpolate placeholders, and render.
-5. Scroll to results section.
-
----
-
-## UI Design Notes
-
-- **Clean, presentable.** Neutral palette with one accent color.
-- **Card-based layout** for output sections.
-- **Smooth scroll** from form to results.
-- **Copy button** uses `navigator.clipboard.writeText()`.
-- **Burmese font** — use system font stack or include a Myanmar font via Google Fonts (e.g. Noto Sans Myanmar).
-
----
-
-## README.md Requirements
-
-- Project description and goal.
-- Screenshot placeholder.
-- How to run (open `index.html`).
-- Technology stack note.
-- At least **3 commit suggestions** with descriptions:
-  1. Initial scaffold — HTML structure + form layout
-  2. Generation engine — rule-based JS logic + template banks
-  3. Polish — styling, copy buttons, Burmese language support
-- Step-by-step commit instructions.
-
----
+- No backend, auth, payment, API keys, framework, package manager, or build step.
+- ES modules require a local static server during development.
+- All persistent app data stays in `localStorage` under `agencyos_` keys.
+- `script.js` remains as a backup/reference for the original generator and is not loaded by the app shell.
+- Burmese output must remain supported through the `my` template bank and Noto Sans Myanmar.
 
 ## Success Criteria
 
-- [ ] Form accepts all 8 fields and validates required inputs.
-- [ ] All 6 output sections generate without errors.
-- [ ] Changing tone, platform, or language produces different output.
-- [ ] Copy button works for each section.
-- [ ] Reset clears form and hides results.
-- [ ] App is responsive on mobile screens.
-- [ ] At least one Burmese-language output path works.
-- [ ] All Ch-3 deliverable files present.
+- [ ] All registered routes render without console errors.
+- [ ] Query-string hashes such as `#/projects/new?client=<id>` match the correct route.
+- [ ] Clients can be created, edited, viewed, searched, filtered, and deleted.
+- [ ] Projects can be created, edited, viewed, searched, filtered, and deleted.
+- [ ] Project creation from a client detail page preselects that client.
+- [ ] Project detail generation persists content to the project record.
+- [ ] Standalone generation renders all six output sections without saving.
+- [ ] Per-section copy and copy-all work where supported by the browser clipboard API.
+- [ ] Mobile sidebar toggles and closes after navigation.
+- [ ] Desktop and mobile layouts remain readable without overlapping text.

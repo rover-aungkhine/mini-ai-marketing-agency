@@ -1,175 +1,109 @@
-# Mini AI Marketing Agency Assistant
+# AgencyOS
 
-A free, browser-based marketing assistant for small businesses. Fill in a business brief and get a complete starter marketing package — instantly. No API keys, no backend, no login.
+AgencyOS is a small, browser-only agency management dashboard for solo operators and small teams. It grew out of the Mini AI Marketing Agency content generator and now combines client management, project tracking, and rule-based marketing content generation in one static app.
 
-![Mini AI Marketing Agency](screenshot.png)
+There is no backend, no framework, no build step, and no API key. Client and project records are stored in browser `localStorage` with the `agencyos_` prefix.
 
-## What It Does
+## Features
 
-| Input                          | Output                           |
-| ------------------------------ | -------------------------------- |
-| Business name & type           | Brand positioning summary        |
-| Product or service             | 3 content pillars                |
-| Target audience                | 5 post ideas                     |
-| Main offer                     | 3 ready-to-use captions          |
-| Platform (Facebook/Instagram)  | 2 ad copy options                |
-| Tone (Friendly/Professional/Premium/Fun) | 1 static creative headline |
-| Language (English / Burmese)   |                                  |
+- Dashboard with client/project stats, quick actions, and recent activity.
+- Client CRM: add, edit, search, filter, view details, and track purchased services.
+- Project tracker: add, edit, filter, view details, track approval status, and link projects to clients.
+- Project content generation: generate and persist a marketing package on a project.
+- Standalone content generator: create a temporary package for copying without saving.
+- English and Burmese template banks across friendly, professional, premium, and fun tones.
 
-All generation is **rule-based** — templates, arrays, and string interpolation in vanilla JavaScript. Nothing leaves your browser.
+Generated packages include:
+
+| Input | Output |
+| --- | --- |
+| Business name and type | Brand positioning summary |
+| Product or service | 3 content pillars |
+| Target audience | 5 post ideas |
+| Main offer | 3 captions |
+| Platform | 2 ad copy options |
+| Tone and language | 1 creative headline |
 
 ## How to Run
 
-```bash
-# Option 1: Open directly
-open index.html
+ES modules need a local server, so do not open `index.html` directly with `file://`.
 
-# Option 2: Serve locally (if you prefer a local server)
+```bash
 python3 -m http.server 8000
-# Then visit http://localhost:8000
 ```
 
-That's it. No `npm install`, no build step, no environment variables.
+Then open:
 
-## Tech Stack
-
-- **HTML** — semantic, accessible form + results layout.
-- **CSS** — custom properties, card-based design, responsive (mobile + desktop), Burmese font support via Google Fonts (Noto Sans Myanmar).
-- **JavaScript (vanilla)** — form validation, template interpolation, DOM rendering, clipboard API for copy buttons.
-
-## Project Files
-
+```text
+http://localhost:8000
 ```
+
+No `npm install`, build command, database, or environment variables are required.
+
+## Routes
+
+| Route | Purpose |
+| --- | --- |
+| `#/` | Redirects to dashboard |
+| `#/dashboard` | Dashboard overview |
+| `#/clients` | Client list |
+| `#/clients/new` | New client form |
+| `#/clients/:id` | Client detail |
+| `#/clients/:id/edit` | Edit client form |
+| `#/projects` | Project list |
+| `#/projects/new` | New project form |
+| `#/projects/new?client=<id>` | New project form with client preselected |
+| `#/projects/:id` | Project detail and saved content generator |
+| `#/projects/:id/edit` | Edit project form |
+| `#/generate` | Temporary standalone content generator |
+
+## Project Structure
+
+```text
 mini-ai-marketing-agency/
-├── index.html              # Main app — form + results
-├── style.css               # All styles
-├── script.js               # Rule-based generation engine
-├── spec.md                 # Full project specification
-├── README.md               # This file
-├── .mcp.json               # MCP configuration
-├── .claude/
-│   ├── skills/
-│   │   └── marketing-strategy/
-│   │       └── SKILL.md    # Marketing strategy skill definition
-│   └── agents/
-│       └── marketing-assistant.md  # Agent role definition
+├── index.html              # AgencyOS app shell
+├── app.js                  # ES module entry point and route registration
+├── router.js               # Hash router with route params
+├── store.js                # localStorage CRUD helpers
+├── generator.js            # Pure rule-based generation engine
+├── style.css               # Dashboard design system and responsive styles
+├── pages/
+│   ├── dashboard.js
+│   ├── clients.js
+│   ├── client-form.js
+│   ├── client-detail.js
+│   ├── projects.js
+│   ├── project-form.js
+│   ├── project-detail.js
+│   └── generator.js
+├── script.js               # Original generator kept as backup/reference
+├── spec.md
+├── CLAUDE.md
 └── slides/
-    └── pitch.md            # Pitch deck outline
+    └── pitch.md
 ```
 
-## How the Generation Engine Works
+## Architecture
 
-1. User fills in 8 form fields and clicks **Generate**.
-2. `script.js` validates all required fields.
-3. A context object is built from the form values.
-4. Templates are selected from banks keyed by `[language][tone]` for each output section.
-5. Content pillars are selected based on business type keyword matching (café, boutique, clinic, salon, gym, etc.).
-6. Placeholders (`{name}`, `{product}`, `{audience}`, etc.) are interpolated with real values.
-7. Results render into 6 cards with individual copy buttons.
+- `index.html` provides the static shell: sidebar, top bar, `<main id="main-content">`, and toast container.
+- `app.js` imports page modules, registers hash routes, initializes the router, and handles mobile sidebar behavior.
+- `router.js` matches exact and parameterized routes, ignoring query strings for matching.
+- `store.js` reads and writes client/project collections in browser `localStorage`.
+- `generator.js` exports only `generate(ctx)` and `interpolate(template, ctx)`.
+- Each page exports `render(container, params)` and owns its own DOM event listeners.
 
-Changing tone, platform, or language selects a different template pool, so output varies meaningfully across combinations.
+## Data Persistence
 
-## Suggested Commits
+Client and project records persist only in the current browser profile. Clearing site data or using another browser will show a separate dataset. The standalone generator does not save output; generated content is persisted only when created from a project detail page.
 
-If you're building this step by step, here are 3 suggested commits:
+## Verification Checklist
 
-### Commit 1: Initial scaffold — HTML structure + form layout
-
-```
-git add index.html style.css
-git commit -m "feat: add business brief form with 8 fields and results section scaffold
-
-- Semantic HTML5 form with all 8 required fields
-- Responsive CSS card layout with custom properties
-- Results section with 6 output cards (hidden until generation)
-- Copy and reset button placeholders
-- Google Fonts integration (Inter + Noto Sans Myanmar)
-- Toast notification element for user feedback
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-```
-
-### Commit 2: Generation engine — rule-based JS logic + template banks
-
-```
-git add script.js
-git commit -m "feat: add rule-based generation engine with bilingual template banks
-
-- Template banks for en/my × 4 tones × 2 platforms (~200 templates)
-- Content pillar mapping by business type keyword (café, clinic, salon, etc.)
-- Form validation with inline error messages
-- Placeholder interpolation engine
-- DOM rendering for all 6 output sections
-- Clipboard API copy buttons (per section + copy all)
-- Smooth scroll to results on generation
-- Toast notifications for user actions
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-```
-
-### Commit 3: Polish — Ch-3 deliverables, README, and final touches
-
-```
-git add README.md spec.md .mcp.json .claude/ slides/
-git commit -m "docs: add README, spec, and Ch-3 deliverables
-
-- README.md with project overview, run instructions, and commit guide
-- spec.md with full project specification and success criteria
-- .mcp.json configuration for claude-mem plugin
-- Marketing strategy skill definition (SKILL.md)
-- Marketing assistant agent definition (marketing-assistant.md)
-- Pitch deck outline with 11 slides (pitch.md)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-```
-
-## Step-by-Step Commit Instructions
-
-```bash
-# 1. Stage and commit the scaffold
-git add index.html style.css
-git commit -m "feat: add business brief form with 8 fields and results section scaffold
-
-- Semantic HTML5 form with all 8 required fields
-- Responsive CSS card layout with custom properties
-- Results section with 6 output cards (hidden until generation)
-- Copy and reset button placeholders
-- Google Fonts integration (Inter + Noto Sans Myanmar)
-- Toast notification element for user feedback
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-
-# 2. Stage and commit the generation engine
-git add script.js
-git commit -m "feat: add rule-based generation engine with bilingual template banks
-
-- Template banks for en/my × 4 tones × 2 platforms (~200 templates)
-- Content pillar mapping by business type keyword (café, clinic, salon, etc.)
-- Form validation with inline error messages
-- Placeholder interpolation engine
-- DOM rendering for all 6 output sections
-- Clipboard API copy buttons (per section + copy all)
-- Smooth scroll to results on generation
-- Toast notifications for user actions
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-
-# 3. Stage and commit documentation and Ch-3 deliverables
-git add README.md spec.md .mcp.json .claude/ slides/
-git commit -m "docs: add README, spec, and Ch-3 deliverables
-
-- README.md with project overview, run instructions, and commit guide
-- spec.md with full project specification and success criteria
-- .mcp.json configuration for claude-mem plugin
-- Marketing strategy skill definition (SKILL.md)
-- Marketing assistant agent definition (marketing-assistant.md)
-- Pitch deck outline with 11 slides (pitch.md)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"
-
-# 4. Verify everything is committed
-git status
-```
+- Serve with `python3 -m http.server 8000`.
+- Visit `#/dashboard`, `#/clients`, `#/projects`, and `#/generate`.
+- Create a client, then create a project from the client detail page and confirm the client is preselected.
+- Generate project content and confirm it remains on the project after navigation.
+- Generate standalone content in English and Burmese and test section copy plus copy all.
+- Resize to mobile width and confirm the sidebar toggles and closes after navigation.
 
 ## License
 

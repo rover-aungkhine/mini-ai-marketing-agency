@@ -1,46 +1,87 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working in this repository.
 
 ## Project Overview
 
-Mini AI Marketing Agency Assistant — a static web app (HTML, CSS, vanilla JS) that generates a starter marketing package from a business brief form. No backend, no frameworks, no API keys. Rule-based JavaScript generation only. See `spec.md` for full requirements.
+AgencyOS is a static, browser-only agency management dashboard built with vanilla JavaScript ES modules. It manages clients and projects in `localStorage` and generates rule-based marketing content packages without a backend, framework, build step, login, or API key.
 
-## How to Run / Develop
+The project evolved from the original Mini AI Marketing Agency single-page generator. The old `script.js` remains as backup/reference, but the active app uses `index.html`, `app.js`, page modules, `store.js`, `router.js`, and `generator.js`.
+
+## How to Run
+
+ES modules require a local server.
 
 ```bash
-# Open directly in browser — no build step, no dev server
-open index.html
-
-# Or serve locally if you prefer
 python3 -m http.server 8000
 ```
 
-No lint, test, or build commands exist — this is a flat static site.
+Open `http://localhost:8000`. Do not rely on `file://` for normal development.
+
+There are no package install, lint, test, or build commands.
 
 ## Architecture
 
-**Single-page app:** `index.html` contains both the form and the results section. The form accepts 8 fields (business name, type, product/service, target audience, main offer, platform, tone, language). On submit, `script.js` reads form values, runs rule-based generation, and renders results into the DOM.
+- `index.html` is the app shell with sidebar navigation, top bar, `<main id="main-content">`, and toast container.
+- `app.js` imports page modules, registers routes, initializes the router, exposes `window.showToast`, and handles mobile sidebar toggling.
+- `router.js` is a hash router with exact and `:id` route matching. It strips query strings for route matching.
+- `store.js` is the localStorage data layer. Keys are prefixed with `agencyos_`.
+- `generator.js` is the pure content generation module and exports only `generate(ctx)` and `interpolate(template, ctx)`.
+- Files in `pages/` each export a default `render(container, params)` function and attach their own DOM listeners.
+- `style.css` contains the dashboard design system, page layouts, forms, tables, cards, badges, generated content sections, toast, and responsive rules.
 
-**Generation engine (`script.js`):** Template banks are nested objects keyed by `[language][tone][section]` plus separate banks for content pillars (keyed by business type) and ad copy (keyed by `[platform][tone]`). Generation flow: validate → build context object → pick templates from matching pools → interpolate `{placeholders}` → render 6 output blocks → scroll to results.
+## Routes
 
-**Styling (`style.css`):** Clean card-based layout with a neutral palette and one accent color. Responsive for mobile and desktop. Uses `navigator.clipboard.writeText()` for copy buttons. Burmese support via Noto Sans Myanmar or system font stack.
+- `#/` redirects to `#/dashboard`
+- `#/dashboard`
+- `#/clients`
+- `#/clients/new`
+- `#/clients/:id`
+- `#/clients/:id/edit`
+- `#/projects`
+- `#/projects/new`
+- `#/projects/new?client=<id>`
+- `#/projects/:id`
+- `#/projects/:id/edit`
+- `#/generate`
 
-## Ch-3 Deliverables
+## Generator Behavior
 
-The project requires these additional files beyond the app source:
+The generator context shape is:
 
-| File | Purpose |
-|------|---------|
-| `.mcp.json` | MCP configuration |
-| `.claude/skills/marketing-strategy/SKILL.md` | Skill definition for marketing strategy |
-| `.claude/agents/marketing-assistant.md` | Agent definition |
-| `slides/pitch.md` | Pitch deck outline |
-| `README.md` | Project overview + 3-step commit guide |
+```js
+{
+  name,
+  type,
+  product,
+  audience,
+  offer,
+  platform,
+  platformLabel,
+  tone,
+  language
+}
+```
 
-## Key Constraints
+The return shape is:
 
-- No backend, no login, no payment, no API keys — purely client-side.
-- Output must vary when tone, platform, or language changes (different template pools).
-- At least one Burmese (`my`) language output path must work.
-- All 6 output sections must generate: brand positioning, 3 content pillars, 5 post ideas, 3 captions, 2 ad copies, 1 creative headline.
+```js
+{
+  positioning,
+  pillars,
+  posts,
+  captions,
+  ads,
+  creative
+}
+```
+
+Project detail generation saves the returned object to `project.generatedContent`. The standalone `#/generate` page is temporary-only and must not create new localStorage records.
+
+## Constraints
+
+- Keep the app static and dependency-free.
+- Preserve existing localStorage data compatibility.
+- Do not remove `script.js` unless explicitly asked.
+- Keep Burmese (`my`) generation and Noto Sans Myanmar support working.
+- Prefer small, page-local changes over new global abstractions unless a pattern is already repeated.
