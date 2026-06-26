@@ -1,11 +1,12 @@
 # ch-4 Personal Project — Report
 
-github_username: rover-aungkhine
-personal_repo_url: https://github.com/rover-aungkhine/mini-ai-marketing-agency
-live_url: https://rover-aungkhine.github.io/mini-ai-marketing-agency/
-license: MIT
-project_summary: A browser-only agency management dashboard with client CRM, content calendar, creative tracking, and AI-powered marketing content generation — no backend, no framework, no API key.
-slides_url: slides/pitch.md
+## Project
+
+- **GitHub username:** @rover-aungkhine
+- **Repo URL:** https://github.com/rover-aungkhine/mini-ai-marketing-agency
+- **Live / download URL:** https://rover-aungkhine.github.io/mini-ai-marketing-agency/
+- **License:** MIT
+- **One-line summary:** A browser-only agency management dashboard with client CRM, content calendar, creative tracking, and AI-powered marketing content generation — no backend, no framework, no API key.
 
 ## Product-Intro Slides
 
