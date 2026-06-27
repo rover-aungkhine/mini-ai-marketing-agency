@@ -55,7 +55,6 @@ export default function renderClients(container) {
     if (filtered.length === 0) {
       grid.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">👥</div>
           <h3>${currentQuery || currentStatus !== 'all' ? 'No clients match your filter' : 'No clients yet'}</h3>
           <p>${currentQuery || currentStatus !== 'all' ? 'Try adjusting your search or filter.' : 'Add your first client to get started.'}</p>
           ${!currentQuery && currentStatus === 'all' ? '<a href="#/clients/new" class="btn btn-primary" style="margin-top:12px">+ Add Client</a>' : ''}

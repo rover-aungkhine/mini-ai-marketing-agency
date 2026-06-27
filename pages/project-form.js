@@ -167,7 +167,8 @@ export default function renderProjectForm(container, params = {}) {
       scope: form.querySelector('#scope').value.trim(),
       internalNotes: form.querySelector('#internalNotes').value.trim(),
       clientNotes: form.querySelector('#clientNotes').value.trim(),
-      generatedContent: project?.generatedContent || null
+      generatedContent: project?.generatedContent || null,
+      tasks: project?.tasks || []
     };
 
     if (isEdit) {

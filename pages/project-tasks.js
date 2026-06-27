@@ -44,6 +44,16 @@ function getAssigneeInitials(name) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
+function getTaskAssigneeLabel(task) {
+  if (task.assigneeId) return Store.getTeamMemberName(task.assigneeId) || task.assignee || 'Unassigned';
+  return task.assignee || 'Unassigned';
+}
+
+function getTaskAssigneeInitials(task) {
+  if (task.assigneeId) return Store.getTeamMemberInitials(task.assigneeId) || getAssigneeInitials(task.assignee);
+  return getAssigneeInitials(task.assignee);
+}
+
 function isBlocked(task, allTasks) {
   if (!task.blockedBy || task.blockedBy.length === 0) return false;
   return task.blockedBy.some(id => {
@@ -71,6 +81,19 @@ function computeStats(tasks) {
 
 function persistTasks(project, tasks) {
   Store.update('projects', project.id, { tasks });
+}
+
+function hasDependencyPath(startId, targetId, tasks, visited = new Set()) {
+  if (startId === targetId) return true;
+  if (visited.has(startId)) return false;
+  visited.add(startId);
+  const task = tasks.find(t => t.id === startId);
+  if (!task) return false;
+  return (task.blockedBy || []).some(id => hasDependencyPath(id, targetId, tasks, visited));
+}
+
+function wouldCreateCycle(taskId, depId, tasks) {
+  return hasDependencyPath(depId, taskId, tasks);
 }
 
 // --- Main render ---
@@ -196,16 +219,17 @@ function renderTaskCard(task, allTasks) {
   const blocked = isBlocked(task, allTasks);
   const subtaskTotal = task.subtasks?.length || 0;
   const subtaskDone = task.subtasks?.filter(s => s.done).length || 0;
+  const assigneeInitials = getTaskAssigneeInitials(task);
 
   return `
     <div class="task-card ${blocked ? 'blocked' : ''}" draggable="true" data-task-id="${task.id}">
       <div class="task-card-title">${esc(task.title)}</div>
       <div class="task-card-meta">
         <span class="priority-dot priority-${task.priority}"></span>
-        ${task.assignee ? `<span class="task-card-assignee">${getAssigneeInitials(task.assignee)}</span>` : ''}
+        ${assigneeInitials ? `<span class="task-card-assignee" title="${esc(getTaskAssigneeLabel(task))}">${assigneeInitials}</span>` : ''}
         ${task.dueDate ? formatDate(task.dueDate) : ''}
         ${subtaskTotal > 0 ? `<span class="task-card-subtasks">${subtaskDone}/${subtaskTotal}</span>` : ''}
-        ${blocked ? '<span class="task-card-blocked-icon" title="Blocked">🔒</span>' : ''}
+        ${blocked ? '<span class="task-card-blocked-icon" title="Blocked">Blocked</span>' : ''}
       </div>
     </div>
   `;
@@ -271,11 +295,10 @@ function handleDrop(taskId, newStatus, project) {
   persistTasks(freshProject, tasks);
 
   // Refresh the whole tasks section
-  const section = document.querySelector('.tasks-section');
+  const section = document.querySelector('#tasks-section');
   if (section) {
-    const parent = section.closest('.main-content') || section.parentElement;
     const refreshedProject = Store.getById('projects', project.id);
-    renderTasks(parent, refreshedProject);
+    renderTasks(section, refreshedProject);
   }
 }
 
@@ -294,11 +317,11 @@ function renderList(container, tasks, project) {
         return `
           <div class="task-list-row" data-task-id="${task.id}">
             <div class="task-list-row-title">
-              ${blocked ? '🔒 ' : ''}${esc(task.title)}
+              ${blocked ? '<span class="task-card-blocked-icon">Blocked</span>' : ''}${esc(task.title)}
             </div>
             <div><span class="status-badge status-${task.status}">${statusObj?.label || task.status}</span></div>
             <div><span class="priority-dot priority-${task.priority}"></span> ${task.priority}</div>
-            <div>${task.assignee ? esc(task.assignee) : '—'}</div>
+            <div>${esc(getTaskAssigneeLabel(task))}</div>
             <div>${task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</div>
             <div>${subtaskTotal > 0 ? `${subtaskDone}/${subtaskTotal}` : '—'}</div>
           </div>
@@ -324,6 +347,7 @@ function renderList(container, tasks, project) {
 }
 
 function renderAddForm(container, project, onSave) {
+  const members = Store.getActiveTeamMembers();
   container.innerHTML = `
     <div class="task-add-form">
       <div class="form-grid">
@@ -339,7 +363,10 @@ function renderAddForm(container, project, onSave) {
         </div>
         <div class="field">
           <label>Assignee</label>
-          <input type="text" id="new-task-assignee" placeholder="Person name">
+          <select id="new-task-assignee-id">
+            <option value="">Unassigned</option>
+            ${members.map(member => `<option value="${member.id}">${esc(member.name)} — ${esc(member.role)}</option>`).join('')}
+          </select>
         </div>
         <div class="field">
           <label>Due Date</label>
@@ -368,7 +395,8 @@ function renderAddForm(container, project, onSave) {
       description: container.querySelector('#new-task-desc').value.trim(),
       status: 'todo',
       priority: container.querySelector('#new-task-priority').value,
-      assignee: container.querySelector('#new-task-assignee').value.trim(),
+      assigneeId: container.querySelector('#new-task-assignee-id').value,
+      assignee: '',
       dueDate: container.querySelector('#new-task-due').value || null,
       attachments: [],
       blockedBy: [],
@@ -392,6 +420,12 @@ function renderAddForm(container, project, onSave) {
 function renderTaskExpand(afterElement, task, project, onRefresh) {
   // Remove any existing expand
   document.querySelectorAll('.task-expand').forEach(el => el.remove());
+  const activeMembers = Store.getActiveTeamMembers();
+  const currentAssignee = task.assigneeId ? Store.getById('teamMembers', task.assigneeId) : null;
+  const members = [
+    ...activeMembers,
+    ...(currentAssignee && !activeMembers.some(m => m.id === currentAssignee.id) ? [currentAssignee] : [])
+  ];
 
   const expand = document.createElement('div');
   expand.className = 'task-expand';
@@ -424,7 +458,11 @@ function renderTaskExpand(afterElement, task, project, onRefresh) {
     </div>
     <div class="task-expand-field">
       <label>Assignee</label>
-      <input type="text" value="${esc(task.assignee || '')}" data-field="assignee">
+      <select data-field="assigneeId">
+        <option value="">Unassigned</option>
+        ${members.map(member => `<option value="${member.id}" ${member.id === task.assigneeId ? 'selected' : ''}>${esc(member.name)} — ${esc(member.role)}</option>`).join('')}
+      </select>
+      ${!task.assigneeId && task.assignee ? `<p class="legacy-assignee-note">Legacy assignee: ${esc(task.assignee)}</p>` : ''}
     </div>
 
     <div class="task-expand-field">
@@ -461,6 +499,8 @@ function renderTaskExpand(afterElement, task, project, onRefresh) {
       const freshProject = Store.getById('projects', project.id);
       const tasks = [...(freshProject.tasks || [])];
       const t = tasks.find(t => t.id === task.id);
+      if (!t) return;
+      t.subtasks = t.subtasks || [];
       const st = t.subtasks.find(s => s.id === cb.dataset.subtaskId);
       if (st) { st.done = cb.checked; }
       persistTasks(freshProject, tasks);
@@ -474,6 +514,8 @@ function renderTaskExpand(afterElement, task, project, onRefresh) {
       const freshProject = Store.getById('projects', project.id);
       const tasks = [...(freshProject.tasks || [])];
       const t = tasks.find(t => t.id === task.id);
+      if (!t) return;
+      t.subtasks = t.subtasks || [];
       t.subtasks = t.subtasks.filter(s => s.id !== btn.dataset.subtaskId);
       persistTasks(freshProject, tasks);
       onRefresh();
@@ -488,6 +530,8 @@ function renderTaskExpand(afterElement, task, project, onRefresh) {
     const freshProject = Store.getById('projects', project.id);
     const tasks = [...(freshProject.tasks || [])];
     const t = tasks.find(t => t.id === task.id);
+    if (!t) return;
+    t.subtasks = t.subtasks || [];
     t.subtasks.push({ id: taskId(), title, done: false });
     persistTasks(freshProject, tasks);
     onRefresh();
@@ -502,11 +546,30 @@ function renderTaskExpand(afterElement, task, project, onRefresh) {
       const freshProject = Store.getById('projects', project.id);
       const tasks = [...(freshProject.tasks || [])];
       const t = tasks.find(t => t.id === task.id);
+      if (!t) return;
+      t.blockedBy = t.blockedBy || [];
+      if (wouldCreateCycle(task.id, depId, tasks)) {
+        showToast('Dependency cycle blocked.');
+        depSelect.value = '';
+        return;
+      }
       if (!t.blockedBy.includes(depId)) t.blockedBy.push(depId);
       persistTasks(freshProject, tasks);
       onRefresh();
     });
   }
+
+  expand.querySelectorAll('[data-remove-dep]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const freshProject = Store.getById('projects', project.id);
+      const tasks = [...(freshProject.tasks || [])];
+      const t = tasks.find(t => t.id === task.id);
+      if (!t) return;
+      t.blockedBy = (t.blockedBy || []).filter(id => id !== btn.dataset.removeDep);
+      persistTasks(freshProject, tasks);
+      onRefresh();
+    });
+  });
 
   // Save
   expand.querySelector('#save-task-btn').addEventListener('click', () => {
@@ -521,9 +584,19 @@ function renderTaskExpand(afterElement, task, project, onRefresh) {
       status: expand.querySelector('[data-field="status"]').value,
       priority: expand.querySelector('[data-field="priority"]').value,
       dueDate: expand.querySelector('[data-field="dueDate"]').value || null,
-      assignee: expand.querySelector('[data-field="assignee"]').value.trim(),
+      assigneeId: expand.querySelector('[data-field="assigneeId"]').value,
+      assignee: expand.querySelector('[data-field="assigneeId"]').value ? '' : tasks[idx].assignee,
       updatedAt: new Date().toISOString()
     };
+    if (tasks[idx].status === 'done' && isBlocked(tasks[idx], tasks)) {
+      const blockerNames = (tasks[idx].blockedBy || [])
+        .map(id => tasks.find(t => t.id === id))
+        .filter(t => t && t.status !== 'done')
+        .map(t => t.title)
+        .join(', ');
+      showToast(`Blocked by: ${blockerNames}`);
+      return;
+    }
     persistTasks(freshProject, tasks);
     showToast('Task updated!');
     onRefresh();
@@ -536,7 +609,7 @@ function renderTaskExpand(afterElement, task, project, onRefresh) {
     let tasks = (freshProject.tasks || []).filter(t => t.id !== task.id);
     tasks = tasks.map(t => ({
       ...t,
-      blockedBy: t.blockedBy.filter(id => id !== task.id)
+      blockedBy: (t.blockedBy || []).filter(id => id !== task.id)
     }));
     persistTasks(freshProject, tasks);
     showToast('Task deleted.');
@@ -553,7 +626,8 @@ function renderDependencySection(task, allTasks) {
   const available = allTasks.filter(t =>
     t.id !== task.id &&
     t.status !== 'done' &&
-    !(task.blockedBy || []).includes(t.id)
+    !(task.blockedBy || []).includes(t.id) &&
+    !wouldCreateCycle(task.id, t.id, allTasks)
   );
   const blockers = (task.blockedBy || [])
     .map(id => allTasks.find(t => t.id === id))
@@ -568,6 +642,7 @@ function renderDependencySection(task, allTasks) {
           <div class="dependency-item">
             <span class="status-badge status-${b.status}">${b.status}</span>
             <span>${esc(b.title)}</span>
+            <button type="button" class="dependency-remove" data-remove-dep="${b.id}" title="Remove dependency">×</button>
           </div>
         `).join('')}
       ${available.length > 0 ? `

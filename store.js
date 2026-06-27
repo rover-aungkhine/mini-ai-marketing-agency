@@ -135,6 +135,111 @@ const Store = {
       .slice(0, limit);
   },
 
+  // --- Internal Team ---
+
+  getTeamMembers() {
+    return this.getAll('teamMembers');
+  },
+
+  getActiveTeamMembers() {
+    return this.getTeamMembers().filter(m => m.status === 'active' || m.status === 'freelance');
+  },
+
+  getTeamMemberName(id) {
+    const member = this.getById('teamMembers', id);
+    return member ? member.name : '';
+  },
+
+  getTeamMemberInitials(id) {
+    const name = this.getTeamMemberName(id);
+    if (!name) return '';
+    return name.split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2);
+  },
+
+  getTeamWorkload() {
+    const members = this.getTeamMembers();
+    const projects = this.getProjects();
+    return members.map(member => {
+      const assignedTasks = projects.flatMap(project =>
+        (project.tasks || [])
+          .filter(task => task.assigneeId === member.id && task.status !== 'done')
+          .map(task => ({
+            ...task,
+            projectId: project.id,
+            projectName: project.name,
+            clientId: project.clientId,
+            clientName: this.getClientName(project.clientId)
+          }))
+      );
+      const estimatedHours = assignedTasks.length * 4;
+      const weeklyCapacity = Number(member.weeklyCapacity) || 40;
+      const loadPercent = weeklyCapacity === 0 ? 0 : Math.round((estimatedHours / weeklyCapacity) * 100);
+      const loadStatus = loadPercent >= 100 ? 'overloaded' : loadPercent >= 75 ? 'busy' : 'available';
+      return { member, assignedTasks, estimatedHours, weeklyCapacity, loadPercent, loadStatus };
+    });
+  },
+
+  seedDemoTeamMembers() {
+    if (this.getTeamMembers().length > 0) return;
+    [
+      {
+        name: 'Aye Chan',
+        role: 'Account Executive',
+        department: 'Client Service',
+        email: 'aye@agencyos.local',
+        phone: '+95 9 210 0001',
+        status: 'active',
+        skills: ['Client comms', 'Briefing', 'Timeline control'],
+        weeklyCapacity: 40,
+        notes: 'Owns client alignment and approvals.'
+      },
+      {
+        name: 'Mya Thiri',
+        role: 'Creative Director',
+        department: 'Creative',
+        email: 'mya@agencyos.local',
+        phone: '+95 9 210 0002',
+        status: 'active',
+        skills: ['Concepting', 'Art direction', 'Brand systems'],
+        weeklyCapacity: 36,
+        notes: 'Reviews campaign concepts before client approval.'
+      },
+      {
+        name: 'Ko Min',
+        role: 'Copywriter',
+        department: 'Content',
+        email: 'komin@agencyos.local',
+        phone: '+95 9 210 0003',
+        status: 'active',
+        skills: ['Captions', 'Ad copy', 'Burmese copy'],
+        weeklyCapacity: 40,
+        notes: 'Writes bilingual social content.'
+      },
+      {
+        name: 'Htet Wai',
+        role: 'Designer',
+        department: 'Design',
+        email: 'htet@agencyos.local',
+        phone: '+95 9 210 0004',
+        status: 'freelance',
+        skills: ['Social graphics', 'Carousel', 'Motion basics'],
+        weeklyCapacity: 24,
+        notes: 'Freelance designer for campaign peaks.'
+      },
+      {
+        name: 'Nandar',
+        role: 'Digital Marketer',
+        department: 'Performance',
+        email: 'nandar@agencyos.local',
+        phone: '+95 9 210 0005',
+        status: 'active',
+        skills: ['Meta Ads', 'Reporting', 'Audience testing'],
+        weeklyCapacity: 40,
+        notes: 'Runs paid media and weekly performance checks.'
+      }
+    ].forEach(member => this.create('teamMembers', member));
+  },
+
   // --- Client Workspace ---
 
   createDefaultWorkspace() {

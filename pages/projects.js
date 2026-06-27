@@ -71,7 +71,6 @@ export default function renderProjects(container) {
     if (filtered.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">📁</div>
           <h3>${currentQuery || currentStatus !== 'all' || currentClient !== 'all' ? 'No projects match your filter' : 'No projects yet'}</h3>
           <p>${currentQuery || currentStatus !== 'all' || currentClient !== 'all' ? 'Try adjusting your filters.' : 'Create your first project to get started.'}</p>
           ${!currentQuery && currentStatus === 'all' && currentClient === 'all' ? '<a href="#/projects/new" class="btn btn-primary" style="margin-top:12px">+ New Project</a>' : ''}

@@ -8,6 +8,7 @@ import renderDashboard from './pages/dashboard.js';
 import renderClients from './pages/clients.js';
 import renderClientForm from './pages/client-form.js';
 import renderClientWorkspace from './pages/client-workspace.js';
+import renderTeam from './pages/team.js';
 import renderProjects from './pages/projects.js';
 import renderProjectForm from './pages/project-form.js';
 import renderProjectDetail from './pages/project-detail.js';
@@ -20,6 +21,7 @@ Router.register('/dashboard', renderDashboard);
 Router.register('/clients', renderClients);
 Router.register('/clients/new', renderClientForm);
 Router.register('/clients/:id/edit', renderClientForm);
+Router.register('/team', renderTeam);
 
 WORKSPACE_SECTIONS.forEach(s => {
   Router.register(`/clients/:id/${s.id}`, (container, params) =>
@@ -38,9 +40,21 @@ Router.register('/generate', renderGenerator);
 
 // --- Seed Demo Data (only if store is empty) ---
 Store.seedDemoData();
+Store.seedDemoTeamMembers();
 
 // --- Init ---
 Router.init();
+
+const sidebar = document.getElementById('sidebar');
+const menuButton = document.getElementById('mobile-menu-btn');
+
+if (sidebar && menuButton) {
+  menuButton.addEventListener('click', () => sidebar.classList.toggle('open'));
+  sidebar.addEventListener('click', (event) => {
+    if (event.target.closest('.nav-item')) sidebar.classList.remove('open');
+  });
+  window.addEventListener('hashchange', () => sidebar.classList.remove('open'));
+}
 
 // --- Toast helper (global) ---
 window.showToast = function (message) {

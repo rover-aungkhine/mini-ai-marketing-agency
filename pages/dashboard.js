@@ -7,23 +7,16 @@ import { icon } from './icons.js';
 
 export default function renderDashboard(container) {
   const clients = Store.getClients();
+  const teamMembers = Store.getTeamMembers();
+  const workload = Store.getTeamWorkload();
   const activeClients = clients.filter(c => c.status === 'active').length;
+  const activeTeamMembers = teamMembers.filter(m => m.status === 'active' || m.status === 'freelance').length;
+  const overloadedMembers = workload.filter(w => w.loadStatus === 'overloaded').length;
   const actionQueue = Store.getAgencyActionQueue();
   const pendingApprovals = actionQueue.filter(a =>
     a.type === 'calendar' || a.type === 'creative' || a.type === 'overdue'
   ).length;
   const recent = Store.getRecentActivity(6);
-
-  const weekPosts = clients.reduce((sum, c) => {
-    const client = Store.getClientWithWorkspace(c.id);
-    if (!client?.workspace) return sum;
-    const weekStart = getWeekStart(new Date()).toISOString().slice(0, 10);
-    const weekEnd = new Date(getWeekStart(new Date()));
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    return sum + client.workspace.calendar.filter(p => {
-      return p.scheduledDate >= weekStart && p.scheduledDate < weekEnd.toISOString().slice(0, 10);
-    }).length;
-  }, 0);
 
   container.innerHTML = `
     <div class="page-header">
@@ -56,8 +49,14 @@ export default function renderDashboard(container) {
       </div>
       <div class="stat-card" data-color="info">
         <div class="stat-info">
-          <span class="stat-number">${weekPosts}</span>
-          <span class="stat-label">Posts This Week</span>
+          <span class="stat-number">${activeTeamMembers}</span>
+          <span class="stat-label">Active Team</span>
+        </div>
+      </div>
+      <div class="stat-card" data-color="danger">
+        <div class="stat-info">
+          <span class="stat-number">${overloadedMembers}</span>
+          <span class="stat-label">Overloaded</span>
         </div>
       </div>
     </div>
@@ -95,6 +94,14 @@ export default function renderDashboard(container) {
             <span class="action-icon">${icon('overview', 'icon-sm')}</span>
             <span>View Clients</span>
           </a>
+          <a href="#/team" class="action-btn">
+            <span class="action-icon">${icon('team', 'icon-sm')}</span>
+            <span>Manage Team</span>
+          </a>
+          <a href="#/projects" class="action-btn">
+            <span class="action-icon">${icon('projects', 'icon-sm')}</span>
+            <span>View Projects</span>
+          </a>
         </div>
       </div>
     </div>
@@ -120,15 +127,6 @@ export default function renderDashboard(container) {
       </div>
     </div>
   `;
-}
-
-function getWeekStart(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
 }
 
 function timeAgo(dateStr) {

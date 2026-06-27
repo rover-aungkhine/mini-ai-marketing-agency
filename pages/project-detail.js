@@ -61,7 +61,7 @@ export default function renderProjectDetail(container, params) {
         <div class="card-header-row">
           <h3>Generated Content</h3>
           <button class="btn btn-primary btn-small" id="generate-btn">
-            ${hasContent ? '🔄 Regenerate' : '✨ Generate Content'}
+            ${hasContent ? 'Regenerate' : 'Generate Content'}
           </button>
         </div>
 
@@ -111,7 +111,7 @@ export default function renderProjectDetail(container, params) {
         </div>
       </div>
 
-    <div id="tasks-section"></div>
+      <div id="tasks-section" class="detail-tasks"></div>
     </div>
   `;
 
